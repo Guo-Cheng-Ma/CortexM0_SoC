@@ -36,7 +36,15 @@ Reset_Handler   PROC
 
 ;Insert a loop algorithm there;
 
-
+                AREA    template, CODE, READONLY
+start           PROC
+                MOVS    R1,     #4
+Clear           MOVS    R0,     #0
+Adder           ADDS    R0,     R0,     #1
+                CMP     R0,     R1
+                BEQ     Clear
+                BNE     Adder
+                ENDP
 ;****************************;
 					
 				END
