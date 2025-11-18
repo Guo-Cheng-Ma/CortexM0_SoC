@@ -1,0 +1,51 @@
+% =========================
+% preamble.tex
+% =========================
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{fontspec}
+\usepackage{ctex}
+
+\usepackage{graphicx}  
+\usepackage{float}      
+\usepackage{pdfpages}   
+
+\usepackage{amsmath,amssymb}
+
+\usepackage{xcolor}
+\usepackage[
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black
+]{hyperref}
+
+\usepackage{caption}
+\usepackage{subcaption} 
+
+\usepackage{listings}
+
+\lstset{
+    language=C,
+    showstringspaces=false,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{teal},
+    stringstyle=\color{red!60!black},
+    frame=single,
+    rulecolor=\color{gray},
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    xleftmargin=2em,
+    xrightmargin=0em
+}
+
+\usepackage{array}                % 基础表格扩展 
+\usepackage{booktabs}             % 三线表支持 (toprule, midrule) 
+\usepackage{multirow}             % 表格合并行 
+\usepackage{caption}              % 更好的标题控制
+
+\graphicspath{{./figure/}{./fig/}{./images/}}
+
+\pagestyle{plain}
