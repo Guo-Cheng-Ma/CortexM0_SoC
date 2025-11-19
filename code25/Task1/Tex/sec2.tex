@@ -1,0 +1,58 @@
+\maketitle
+\section{实验原理} % [cite: 3]
+\subsection{Cortex-M0 调试环境}
+本实验使用 Keil MDK 集成开发环境进行软件开发与调试。Cortex-M0 处理器内置 CoreSight 调试技术，支持通过仿真器（如 CMSIS-DAP 或 J-Link）进行硬件调试。调试环境的核心功能包括：
+\begin{itemize}
+    \item \textbf{寄存器观察}：实时监控通用寄存器（R0-R12）、栈指针（SP）、链接寄存器（LR）和程序计数器（PC）的状态变化。
+    \item \textbf{内存映射（Memory Map）}：利用 ARM 的统一编址特性，通过 Memory 窗口直接查看代码段、数据段及栈空间的具体数值。
+    \item \textbf{执行控制}：支持设置硬件断点、单步运行（Step）和全速运行，便于追踪程序流程。
+\end{itemize}
+\newpage
+\subsection{指令工作过程}
+Cortex-M0 处理器基于 ARMv6-M 架构，主要执行 16 位的 Thumb 指令。指令执行遵循 \textbf{三级流水线} 机制：
+\begin{enumerate}
+    \item \textbf{取指 (Fetch)}：从存储器中读取指令代码。
+    \item \textbf{译码 (Decode)}：解析指令含义及操作数。
+    \item \textbf{执行 (Execute)}：执行 ALU 运算、数据传输或跳转操作。
+\end{enumerate}
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=2.8cm,
+        >=Stealth,
+        every node/.style={font=\small},
+        box/.style={
+            draw,
+            rounded corners,
+            minimum width=2.8cm,
+            minimum height=1.2cm,
+            align=center
+        }
+    ]
+        % 三个阶段
+        \node[box] (fetch)  {取指\\(Fetch)};
+        \node[box, right=of fetch] (decode) {译码\\(Decode)};
+        \node[box, right=of decode] (exec)  {执行\\(Execute)};
+
+        % 箭头
+        \draw[->] (fetch) -- (decode);
+        \draw[->] (decode) -- (exec);
+
+        % PC 的说明（可选）
+        \node[above=0.6cm of fetch] (pc) {PC 指向当前指令地址 + 4};
+        \draw[->] (pc) -- (fetch);
+    \end{tikzpicture}
+    \caption{Cortex-M0 指令三级流水线示意图}
+\end{figure}
+
+由于流水线的存在，PC (R15) 的值通常等于当前执行指令地址加 4（两条指令的偏移）。
+
+\subsection{函数调用的基本原理}
+ARM 汇编程序与 C 语言程序的相互调用遵循 \textbf{ATPCS (ARM-Thumb Procedure Call Standard)} 标准：
+\begin{itemize}
+    \item \textbf{参数传递}：函数的具体参数依次通过寄存器 \textbf{R0-R3} 传递；若参数超过 4 个，剩余参数通过栈传递。
+    \item \textbf{返回值}：函数的返回值通常保存在 \textbf{R0} 寄存器中。
+    \item \textbf{栈 (Stack)}：Cortex-M0 使用\textbf{满递减 (Full Descending)}栈。栈指针 SP (R13) 指向当前栈顶数据，入栈 (PUSH) 时地址减小，出栈 (POP) 时地址增加。栈用于保存局部变量及函数调用时的现场（Context）。
+    \item \textbf{返回地址}：使用 \texttt{BL} 指令调用函数时，下一条指令的地址会自动保存到链接寄存器 \textbf{LR (R14)} 中。函数返回时，通常将 LR 的值加载回 PC，或通过 \texttt{POP \{PC\}} 实现返回。
+    \item \textbf{寄存器保护}：被调用函数需保证 \textbf{R4-R11} 的值在调用前后保持不变（Callee-saved），若需使用这些寄存器，必须先压栈保护。
+\end{itemize}

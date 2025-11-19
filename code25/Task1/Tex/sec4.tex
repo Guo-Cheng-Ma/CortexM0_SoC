@@ -1,0 +1,283 @@
+
+
+\section{实验过程} % [cite: 14]
+\textbf{提示：此处要求对程序的工作原理进行分析，以及解释为什么这么修改示例程序，并且通过Keil调试模式的截图证明结果的正确性。}
+
+\subsection{任务一：汇编编程计算}
+
+本任务要求在 Cortex-M0 平台上编写一个简单的汇编程序，实现给定算术表达式的计算，并通过 Keil 调试器观察寄存器中结果的变化，加深对 ARM 指令执行过程和调用约定的理解。
+
+本实验工程包含\textbf{提供的启动文件} \verb|startup_CMSDK_CM0.s| 与\textbf{自编汇编源文件} \verb|compute.s|。
+
+启动文件主要负责系统复位后的环境初始化与中断向量表定义。具体流程如下：首先在 \verb|STACK| 段中分配 1\,KB 的栈空间并导出栈顶符号 \verb|__initial_sp|；其次在 \verb|RESET| 段构建向量表 \verb|__Vectors|，将栈顶地址与复位中断服务程序 \verb|Reset_Handler| 填入表项前两项。
+
+在代码段实现的 \verb|Reset_Handler| 中，程序通过 \verb|IMPORT main| 声明外部符号，并执行 \verb|LDR R0, =main| 与 \verb|BX R0| 指令，将控制权直接转移至用户编写的 \verb|main| 函数。值得注意的是，该启动文件直接跳转至用户入口 \verb|main| 而非标准 C 库入口 \verb|__main|，这意味着程序跳过了 C 运行库的初始化过程（如全局变量初始化）；但为了满足链接器对符号的静态依赖，我在自编的 \verb|compute.s| 中额外定义了桩函数 \verb|__user_initial_stackheap|，从而保证了工程的顺利编译与链接。
+
+\verb|compute.s| 中给出了任务一的具体计算逻辑。程序首先定义代码段并导出符号：
+\begin{verbatim}
+    AREA    MyTask1, CODE, READONLY
+    EXPORT  main
+    EXPORT  __user_initial_stackheap
+\end{verbatim}
+
+其中 \verb|main| 为程序入口，\verb|__user_initial_stackheap| 用于满足运行库对堆初始化符号的依赖（见下文）。在 \verb|main| 中，按照“先装载操作数，再执行乘加运算”的思路，依次完成如下操作：
+\begin{enumerate}
+  \item 使用 \verb|LDR| 指令将常数装载到通用寄存器：\verb|R0, = 2023310103|，\verb|R1, = 8|，\verb|R3, = 45|；
+  \item 执行 \verb|MULS R0, R1, R0| 完成乘法运算，使 \verb|R0 = R1 * R0|，即 \verb|R0 = 2023310103 * 8|；
+  \item 执行 \verb|ADDS R0, R0, R3| 完成加法运算，使 \verb|R0 = R0 + R3|，最终结果为
+        \[
+            R0 = 2023310103 \times 8 + 45 ;
+        \]
+  \item 使用 \verb|MOV R3, R0| 将结果再备份一份到 \verb|R3|，便于在调试时交叉检查；
+  \item 最后跳转到标号 \verb|Stop|，并通过 \verb|B Stop| 形成死循环，使程序停在固定位置，便于在调试器中暂停和观察寄存器状态。
+\end{enumerate}
+
+为解决链接阶段运行库对 \verb|__user_initial_stackheap| 符号的依赖，我在文件末尾添加了一个最小实现：
+\begin{verbatim}
+__user_initial_stackheap
+    BX      LR
+\end{verbatim}
+
+该函数本身不做任何实际堆初始化操作，但可以满足运行库对符号的需求，不会影响程序行为，因为本实验并不使用 \verb|malloc| 等需要堆空间的函数。
+
+在 Keil 调试器中，我将程序运行至 \verb|Stop| 死循环处，并在寄存器窗口中观察结果。此时寄存器 \verb|R0| 的值为 \verb|0xC4CA18E5|，换算为十进制为
+\[
+    0xC4CA18E5 = 3\,301\,578\,981,
+\]
+
+而算术表达式的数学结果为
+\[
+    2023310103 \times 8 + 45 = 16\,186\,480\,869.
+\]
+
+通用寄存器宽度为 32 位，按无符号数解释时的范围是 $0\sim 2^{32}-1$，寄存器中实际保留的是上述结果对 $2^{32}$ 取模的值：
+\[
+    16\,186\,480\,869 \bmod 2^{32} = 3\,301\,578\,981,
+\]
+
+与寄存器中的数值完全一致；同时 \verb|R3| 中也保存了相同的结果。通过单步执行 \verb|MULS| 和 \verb|ADDS| 指令，可以直观地观察到 \verb|R0| 中数值的逐步变化。以上调试结果表明，任务一的汇编程序正确实现了题目要求的算术运算，程序设计和运行过程均符合预期。
+
+\newpage
+\begin{lstlisting}[language=Assembler, caption={任务一汇编程序代码}]
+    ;compute.s
+    AREA    MyTask1, CODE, READONLY             
+
+    EXPORT  main            
+    EXPORT  __user_initial_stackheap
+
+main                            
+    LDR     R0, =2023310103 
+    LDR     R1, =8       
+    LDR     R3, =45    
+
+    MULS    R0, R1, R0      
+
+    ADDS    R0, R0, R3      
+
+    MOV     R3, R0          
+
+Stop
+    B       Stop            
+    
+    ALIGN
+
+__user_initial_stackheap
+    BX      LR              
+
+    END
+\end{lstlisting}
+\begin{figure}[H]
+    \centering
+    % 一行四个
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{1.png}
+        \caption{}
+        \label{fig:2-a}
+    \end{subfigure}\hspace{-0.3em}
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{2.png}
+        
+        \caption{}\label{fig:2-b}
+    \end{subfigure}\hspace{-0.3em}
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{3.png}
+        
+        \caption{}\label{fig:2-c}
+    \end{subfigure}\hspace{-0.3em}
+    \begin{subfigure}[b]{0.23\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{4.png}
+       
+        \caption{} \label{fig:2-d}
+    \end{subfigure}
+    
+    \caption{实验结果图示}
+\end{figure}
+
+如图 \ref{fig:2-a} 所示，$b, c, d$ 写入寄存器 $R_0, R_1, R_3$；图 \ref{fig:2-b} 所示，执行乘法指令后，$R_0$ 中存储 $a = b \times c$ 的结果；图 \ref{fig:2-c} 所示，执行加法指令后，$R_0$ 中存储 $a = b \times c + d$ 的结果；图 \ref{fig:2-d} 所示，寄存器 $R_0, R_3$ 中均存储 $a = b \times c + d$。
+
+考虑到这里由于班级号太大导致溢出，可以考虑适当缩小之，比如写成3，这样计算结果就不会溢出了。这里不做展示。
+
+\subsection{任务二：C程序调用汇编 (strcopy)}
+
+\subsubsection{任务目标与原理分析}
+
+本任务要求实现 C 语言调用汇编程序完成字符串复制（目标是将字符串修改为个人学号），并验证结果的正确性。
+
+\begin{itemize}
+    \item \textbf{程序工作原理：} 程序执行始于 $main()$ 函数。在 $main()$ 函数中，通过外部声明 \lstinline|extern void strcopy(char *d, const char *s);| 调用汇编函数 \lstinline|strcopy|。
+    \item \textbf{传参机制 (ATPCS - ARM-Thumb Procedure Call Standard)：} 根据 $ATPCS$ 规则，C 语言函数调用时，前四个 $32$ 位参数依次通过寄存器 $R0$ 至 $R3$ 传递。因此：
+    \begin{itemize}
+        \item 目的字符串地址（\lstinline|dststr|）作为第一个参数，存放在寄存器 $R0$ 中。
+        \item 源字符串地址（\lstinline|srcstr|）作为第二个参数，存放在寄存器 $R1$ 中。
+    \end{itemize}
+    \item \textbf{汇编实现：} 汇编函数 \lstinline|strcopy| 利用寄存器间接寻址，循环地将 $R1$（源地址）指向的字符加载到 $R2$，然后将 $R2$ 存储到 $R0$（目的地址）。通过判断字符是否为 $0$（空字符 $\backslash 0$）来确定字符串的结束。
+    \item \textbf{返回机制：} 子程序执行完复制操作后，使用 $BX\ lr$ (Branch and Exchange to Link Register) 指令返回到调用者（$main$ 函数）。
+\end{itemize}
+
+\subsubsection{示例程序代码}
+
+本任务主要使用了 \lstinline|main.c| 和 \lstinline|strcopy.s| 两个文件。
+
+\begin{lstlisting}[language=Assembler, caption={汇编字符串复制代码}]
+            ;strcopy.s 
+            AREA SCopy, CODE, READONLY
+            EXPORT  strcopy
+strcopy
+            LDRB     r2,     [r1]    ; R1 (源地址) 读取字符到 R2
+            ADDS     r1,     #1      ; 源地址指针递增
+            STRB     r2,     [r0]    ; R2 字符存储到 R0 (目的地址)
+            ADDS     r0,     #1      ; 目的地址指针递增
+            CMP      r2,     #0      ; 判断是否为 NULL 结束符
+            BNE      strcopy         ; 非 NULL 则继续循环
+            BX       lr              ; 汇编子程序返回
+            END
+\end{lstlisting}
+\newpage
+\begin{lstlisting}[language=C, caption={C语言调用汇编函数代码}]
+//main.c
+#include <string.h>
+#include <stdint.h>
+#include <stdio.h>
+
+extern void strcopy(char *d, const char *s);
+
+int main()
+{
+    char srcstr[] = "2023310103008";    
+    char dststr[] = "Second string - destination";  
+    strcopy(dststr,srcstr); 
+    return 0;
+}
+\end{lstlisting}
+
+\subsubsection{实验调试过程与结果验证}
+
+在 Keil 调试器中，我们通过观察寄存器和内存窗口来验证程序的执行流程和结果。
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{5.png}
+    \caption{初始状态}
+    \label{fig:initial_state}
+\end{figure}
+如图 \ref{fig:initial_state} 所示，内存显示$Ascii$码“Second string - destination”存储在目的字符串地址处。此时$RO=0x20000430,R1=0x2000044C$
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{6.png}
+    \caption{开始复制}
+    \label{fig:start_copy}
+\end{figure}
+
+如图 \ref{fig:start_copy} 所示，开始复制后，寄存器 $R0=0x20000433,R1=0x20000450$，$R0$指向正在粘贴的位置，$R1$指向将要复制的位置
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{7.png}
+    \caption{复制完成}
+    \label{fig:copy_complete}
+\end{figure}
+
+如图 \ref{fig:copy_complete} 所示，复制完成后，内存显示目的字符串已被修改为“2023310103008”，验证了字符串复制的正确性。此时，由于检测到字符串结束符，标志位 $Z$ 被置为 1，导致条件跳转指令（\texttt{BNE}）失效，从而跳出循环，标志着复制操作的结束。
+
+\subsection{任务三：C语言内嵌汇编}
+
+本任务要求在 C 语言中插入少量汇编代码，实现简单算术运算，并通过调试器观察寄存器与变量之间的对应关系，从而理解参数传递约定和内联汇编的用法。实验中使用的 C 程序如下所示：{\small
+\begin{lstlisting}[language=C]
+//main.c
+#include <stdio.h>
+
+int math_calc(int i, int j, int k)
+{
+    int res; 
+    
+    __asm
+    {
+        MOVS res, i      
+        MULS res, j      
+        ADDS res, res, k 
+    }
+    
+    return res;
+}
+
+int main()
+{
+    int result;
+    result = math_calc(2, 3, 4); 
+    
+    return 0;
+}
+\end{lstlisting}}
+
+\paragraph{工作原理分析} 在 \verb|math_calc| 函数中，首先按照 C 语言的形式定义了三个整型参数 \verb|i|、\verb|j|、\verb|k| 和一个局部变量 \verb|res|。函数体内部使用 \verb|__asm { ... }| 块插入 ARM 汇编指令。编译器会在生成目标代码时，将 \verb|i|、\verb|j|、\verb|k|、\verb|res| 映射到对应的寄存器或栈上的临时单元，在内联汇编块中，标识符 \verb|i|、\verb|j|、\verb|k|、\verb|res| 就可以像普通寄存器一样被汇编指令访问。
+
+内联汇编块完成的运算过程为：
+\begin{enumerate}
+  \item \verb|MOVS res, i|：将形参 \verb|i| 的值复制到局部变量 \verb|res| 中，作为后续计算的初始值；
+  \item \verb|MULS res, j|：执行乘法运算 \verb|res = res * j|，此时 \verb|res = i * j|；
+  \item \verb|ADDS res, res, k|：执行加法运算 \verb|res = res + k|，最终得到表达式
+        \[
+            res = i \times j + k .
+        \]
+\end{enumerate}
+内联汇编结束后，\verb|res| 的值通过 \verb|return res;| 作为函数返回值返回。根据 ARM 的 ATPCS 约定，函数返回值最终会存放在寄存器 \verb|R0| 中，因此在调试器中观察到 \verb|R0| 的值即为计算结果。
+
+在 \verb|main| 函数中调用 \verb|math_calc(2, 3, 4)|，期望结果为
+\[
+    2 \times 3 + 4 = 10 .
+\]
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\linewidth]{8.png}
+    \caption{初始赋值}
+    \label{fig:initial_assignment}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\linewidth]{9.png}
+    \caption{$i\times j$}
+    \label{fig:乘法计算}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\linewidth]{10.png}
+    \caption{得出结果}
+    \label{fig:加法计算}
+\end{figure}
+在 Keil 调试模式下，单步执行到 \verb|return 0;| 前暂停，此时在寄存器窗口可以看到 \verb|R0 = 0x0000000A|，与十进制 10 一致；在 Watch 窗口中，\verb|result| 的值也为 10。调试结果验证了内联汇编块正确实现了给定的算术表达式，说明 C 语言与内嵌汇编之间的数据传递和寄存器使用均符合预期。
+
+
+通过本实验，可以直观地理解：
+\begin{itemize}
+  \item C 形参和局部变量如何被映射到寄存器／栈空间，并在内联汇编中被访问；
+  \item ARM 汇编中 \verb|MOVS|、\verb|MULS|、\verb|ADDS| 等指令的具体作用；
+  \item 函数返回值通过寄存器 \verb|R0| 传递这一 ATPCS 规则在实际代码中的体现。
+\end{itemize}
+这为后续在更复杂的 C 工程中插入优化用汇编代码打下了基础。

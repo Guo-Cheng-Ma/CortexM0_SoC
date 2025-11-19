@@ -1,16 +1,36 @@
 % =========================
 % main.tex
-% 主文件：只放结构和内容
+% 实验报告主文件
 % =========================
-\documentclass[12pt]{ctexart}
+\documentclass[12pt,a4paper]{ctexart}
 
-% 导入公共导言区
+% 导入公共导言区 (preamble.tex)
 \input{preamble}
 
-\title{TITLE}
-\author{author}
-\date{\today}
-
+% =========================
+% 封面/标题信息
+% =========================
+\title{\textbf{实验一\quad ARM汇编程序设计}} % [cite: 1]
+\author{
+    姓名：\underline{\makebox[3cm]{黄梓豪}} \quad % [cite: 2]
+    学号：\underline{\makebox[5cm]{2023310103008}}      % [cite: 2]
+}
+\date{}
+\AtBeginDocument{%
+    \maketitle
+    \begingroup
+        \centering\small 本文使用 \LaTeX{} 构建。\par
+    \endgroup
+}
 \begin{document}
-\include{sec1}
+
+% 生成标题
+% \maketitle
+
+\input{sec1}
+\input{sec2}
+\input{sec3}
+\input{sec4}
+\input{sec5}
+\input{sec6}
 \end{document}

@@ -24,11 +24,10 @@
 \usepackage{subcaption} 
 
 \usepackage{listings}
-
 \lstset{
     language=C,
     showstringspaces=false,
-    basicstyle=\small\ttfamily,
+    basicstyle=\footnotesize\ttfamily, % Reduced font size
     keywordstyle=\color{blue},
     commentstyle=\color{teal},
     stringstyle=\color{red!60!black},
@@ -36,7 +35,7 @@
     rulecolor=\color{gray},
     breaklines=true,
     numbers=left,
-    numberstyle=\tiny,
+    numberstyle=\large, % Increased font size for line numbers
     xleftmargin=2em,
     xrightmargin=0em
 }
@@ -49,3 +48,28 @@
 \graphicspath{{./figure/}{./fig/}{./images/}}
 
 \pagestyle{plain}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\lstdefinelanguage{Assembler}{
+    morekeywords={AREA, EXPORT, LDR, MULS, ADDS, MOV, B, BX, ALIGN, END},
+    sensitive=true,
+    morecomment=[l]{;},
+    morestring=[b]"
+}
+
+\lstset{
+    language=Assembler,
+    basicstyle=\footnotesize\ttfamily, % Reduced font size
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\small\ttfamily,
+    stepnumber=1,
+    numbersep=5pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single
+}

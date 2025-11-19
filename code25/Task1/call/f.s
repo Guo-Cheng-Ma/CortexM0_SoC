@@ -10,3 +10,4 @@
         ADDS   r3, r1, r1        ; (R3)=i*4
         BL     g                 ; 调用C函数g()，返回值在R0中
         POP    {pc}
+		END
