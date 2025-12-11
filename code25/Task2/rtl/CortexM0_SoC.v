@@ -283,24 +283,24 @@ wire [3:0]  RAMCODE_WRITE;
 
 AHBlite_Block_RAM RAMCODE_Interface(
         /* Connect to Interconnect Port 0 */
-        .HCLK           (clk),
-        .HRESETn        (cpuresetn),
-        .HSEL           (/*Port 0*/),
-        .HADDR          (/*Port 0*/),
-        .HPROT          (/*Port 0*/),
-        .HSIZE          (/*Port 0*/),
-        .HTRANS         (/*Port 0*/),
-        .HWDATA         (/*Port 0*/),
-        .HWRITE         (/*Port 0*/),
-        .HRDATA         (/*Port 0*/),
-        .HREADY         (/*Port 0*/),
-        .HREADYOUT      (/*Port 0*/),
-        .HRESP          (/*Port 0*/),
-        .BRAM_WRADDR    (RAMCODE_WADDR),
-        .BRAM_RDADDR    (RAMCODE_RADDR),
-        .BRAM_RDATA     (RAMCODE_RDATA),
-        .BRAM_WDATA     (RAMCODE_WDATA),
-        .BRAM_WRITE     (RAMCODE_WRITE)
+        .HCLK              (clk),
+        .HRESETn           (cpuresetn),
+        .HSEL              (HSEL_P0),
+        .HADDR             (HADDR_P0),
+        .HPROT             (HPROT_P0),
+        .HSIZE             (HSIZE_P0),
+        .HTRANS            (HTRANS_P0),
+        .HWDATA            (HWDATA_P0),
+        .HWRITE            (HWRITE_P0),
+        .HRDATA            (HRDATA_P0),
+        .HREADY            (HREADY_P0),
+        .HREADYOUT         (HREADYOUT_P0),
+        .HRESP             (HRESP_P0),
+        .BRAM_WRADDR       (RAMCODE_WADDR),
+        .BRAM_RDADDR       (RAMCODE_RADDR),
+        .BRAM_RDATA        (RAMCODE_RDATA),
+        .BRAM_WDATA        (RAMCODE_WDATA),
+        .BRAM_WRITE        (RAMCODE_WRITE)
         /**********************************/
 );
 

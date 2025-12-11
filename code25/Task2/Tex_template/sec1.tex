@@ -1,0 +1,28 @@
+\section{实验目的}
+\begin{enumerate}
+    \item 搭建一个简单的SoC。掌握在总线上添加外设的方法，理解SoC系统的启动过程，总线读写操作的原理。
+    \item 能编写简单的汇编程序，实现对CPU寄存器的控制，理解CPU运行的过程。
+\end{enumerate}
+\section{实验原理}
+\begin{figure}[H]
+    \includegraphics[width=0.8\textwidth]{1.png}
+    \centering
+    \caption{AHB-Lite 总线示意图}
+
+\end{figure}
+
+
+本实验搭建了一个基于 Cortex-M0 内核的简化 SoC。
+Cortex-M0 作为唯一总线主机，通过 AHB-Lite 总线访问片上存储器 RAMCODE 以及预留的外设地址空间。
+总线扩展模块 \texttt{bus\_ext} 内部包含地址译码器和从机多路选择器：地址译码器根据 \texttt{HADDR} 产生各从机片选信号 \texttt{HSELx}，从机多路选择器根据片选结果选择对应从机的 \texttt{HRDATA}、\texttt{HRESP}、\texttt{HREADYOUT} 返回给 CPU。
+RAMCODE 被映射到统一地址空间的低地址区域，在仿真开始时通过 \texttt{\$readmemh} 将 \texttt{code.hex} 预加载到 RAMCODE 中，作为 CPU 的指令和数据存储器。
+
+实验采用 AHB-Lite 协议，一次传输分为地址阶段和数据阶段，并支持流水线。
+在地址阶段，CPU 在时钟上升沿输出 \texttt{HADDR}、\texttt{HWRITE}、\texttt{HTRANS}、\texttt{HSIZE} 等信号，同时由地址译码器产生相应的 \texttt{HSELx}。
+在数据阶段，写操作由 CPU 在 \texttt{HWDATA} 上提供写数据，读操作由从机在 \texttt{HRDATA} 上返回读数据，当 \texttt{HREADY} 为 1 时当前传输完成。
+若从机未准备好，可通过将 \texttt{HREADYOUT} 拉低插入等待周期，此时 \texttt{HREADY} 为 0，总线保持当前传输状态，直到 \texttt{HREADY} 再次为 1。
+
+仿真开始时，先将 \texttt{code.hex} 加载到 RAMCODE，对指令存储空间初始化。
+释放复位后，Cortex-M0 按复位向量从 RAMCODE 中取出入口地址，设置 PC 并开始执行程序。
+在运行过程中，CPU 通过 AHB-Lite 不断从 RAMCODE 取指，完成取指、译码和执行循环；执行 \texttt{LDR}/\texttt{STR} 等指令时，CPU 通过总线对 RAMCODE 或其它映射区域发起读写访问。
+通过观察仿真波形中 \texttt{HADDR}、\texttt{HWRITE}、\texttt{HWDATA}、\texttt{HRDATA}、\texttt{HREADY} 等信号变化，可以清晰看出 CPU 复位启动、取指以及数据读写的时序过程。

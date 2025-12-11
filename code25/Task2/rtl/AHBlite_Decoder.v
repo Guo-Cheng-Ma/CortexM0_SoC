@@ -1,7 +1,7 @@
 module AHBlite_Decoder
 #(
     /*RAMCODE enable parameter*/
-    parameter Port0_en = 0,
+    parameter Port0_en = 1,
     /************************/
 
     /*WaterLight enable parameter*/
@@ -35,7 +35,7 @@ module AHBlite_Decoder
 
 //0x00000000-0x0000ffff
 /*Insert RAMCODE decoder code there*/
-assign P0_HSEL = 1'b0;
+assign P0_HSEL = (HADDR[31:16] == 16'h0000) ? Port0_en : 1'b0; 
 /***********************************/
 
 

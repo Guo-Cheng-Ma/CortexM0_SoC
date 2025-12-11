@@ -1,0 +1,25 @@
+% =========================
+% main.tex
+% 主文件：只放结构和内容
+% =========================
+\documentclass[12pt]{ctexart}
+% 导入公共导言区
+\input{preamble}
+
+\title{\textbf{实验二\quad 总线、RAM、汇编与仿真}} % [cite: 1]
+\author{
+    姓名：\underline{\makebox[3cm]{黄梓豪}} \quad % [cite: 2]
+    学号：\underline{\makebox[5cm]{2023310103008}}      % [cite: 2]
+}
+\date{}
+\AtBeginDocument{%
+    \maketitle
+    \begingroup
+        \centering\small 本文使用 \LaTeX{} 构建。\par
+    \endgroup
+}
+
+\begin{document}
+\input{sec1}
+\input{sec2}
+\end{document}
